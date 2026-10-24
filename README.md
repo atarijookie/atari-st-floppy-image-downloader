@@ -12,19 +12,23 @@ emulator.
 
 ## Use
 
-1. Download the program for your system from [Releases](https://github.com/atarijookie/atari-st-floppy-image-downloader/releases/latest):
+1. Download the archive for your system from [Releases](https://github.com/atarijookie/atari-st-floppy-image-downloader/releases/latest):
 
    | system | file |
    |---|---|
-   | Windows | `...-windows-amd64.exe` |
-   | macOS (Apple chip / Intel) | `...-darwin-arm64` / `...-darwin-amd64` |
-   | Linux PC | `...-linux-amd64` |
-   | Raspberry Pi | `...-linux-arm64` (64-bit OS), `...-linux-armv6` (32-bit OS) |
+   | Windows | `...-windows-amd64.zip` (old 32-bit Windows: `...-windows-386.zip`) |
+   | macOS (Apple chip / Intel) | `...-darwin-arm64.tar.gz` / `...-darwin-amd64.tar.gz` |
+   | Linux PC | `...-linux-amd64.tar.gz` |
+   | Raspberry Pi | `...-linux-arm64.tar.gz` (64-bit OS), `...-linux-armv6.tar.gz` (32-bit OS) |
 
-2. Put it into the folder where you want the images, and run it:
-   - Windows: double-click it (Windows may warn about an unknown program - "More info" -> "Run anyway")
-   - macOS / Linux: in a terminal, `chmod +x atari-st-floppy-image-downloader-*` and then `./atari-st-floppy-image-downloader-...`
-     (macOS may block it the first time - right-click it -> Open, or `xattr -d com.apple.quarantine <file>`)
+   `SHA256SUMS` next to them has their checksums.
+
+2. Unpack it where you want the images - it has a folder with the program and this README - and run the program:
+   - Windows: right-click the zip -> "Extract All", then double-click `atari-st-floppy-image-downloader.exe`
+     (Windows may warn about an unknown program - "More info" -> "Run anyway")
+   - macOS / Linux: `tar -xzf atari-st-floppy-image-downloader-*.tar.gz`, then in that folder
+     `./atari-st-floppy-image-downloader` (macOS may block it the first time - right-click it -> Open, or
+     `xattr -d com.apple.quarantine atari-st-floppy-image-downloader`)
 
 3. The images go into the `floppyImages` folder next to it - about 3 GB for all ~4400 images, 1-2 hours (it waits a second between the downloads, to be nice to the sites).
    It can be stopped (Ctrl+C, or closing the window) and started again - it goes on where it stopped.
@@ -107,6 +111,11 @@ Go 1.19 or newer, no other dependencies:
 go test ./...
 ./build.sh 1.0.0         # all platforms -> dist/
 ```
+
+- `dist/<name>-<version>-<os>-<arch>.zip` (Windows) / `.tar.gz` (Linux, macOS) - what goes into a release, with
+  `dist/imagelist.json.gz` and `dist/SHA256SUMS`
+- `dist/build/<name>-<version>-<os>-<arch>/` - the same unpacked, e.g. to run it right away:
+  `./dist/build/*-linux-amd64/atari-st-floppy-image-downloader -list list/imagelist.json.gz -out ~/atari/floppies`
 
 ### Releasing
 
