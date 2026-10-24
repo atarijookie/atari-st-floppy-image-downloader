@@ -28,6 +28,8 @@ emulator.
 
 3. The images go into the `floppyImages` folder next to it - about 3 GB for all ~4400 images, 1-2 hours (it waits a second between the downloads, to be nice to the sites).
    It can be stopped (Ctrl+C, or closing the window) and started again - it goes on where it stopped.
+   Each downloaded image is listed with the URL it came from; the bottom line shows the image being downloaded, its
+   progress and the speed.
 
 ### Finding a game
 

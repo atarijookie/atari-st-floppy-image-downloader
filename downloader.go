@@ -42,7 +42,7 @@ type downloader struct {
 	opt      options
 	list     *imagelist.List
 	fetch    *fetcher
-	log      io.Writer
+	con      *console
 	diskFree func(string) (uint64, error)
 	sleep    func(context.Context, time.Duration)
 
@@ -61,9 +61,9 @@ type downloader struct {
 	}
 }
 
-func newDownloader(opt options, list *imagelist.List, f *fetcher, log io.Writer) *downloader {
+func newDownloader(opt options, list *imagelist.List, f *fetcher, con *console) *downloader {
 	d := &downloader{
-		opt: opt, list: list, fetch: f, log: log, diskFree: diskFreeBytes, sleep: sleepCtx,
+		opt: opt, list: list, fetch: f, con: con, diskFree: diskFreeBytes, sleep: sleepCtx,
 		sources:     map[string]imagelist.Source{},
 		archivesFor: map[string][]*imagelist.Archive{},
 		wanted:      map[string]*imagelist.Image{},
@@ -98,7 +98,7 @@ func sleepCtx(ctx context.Context, t time.Duration) {
 }
 
 func (d *downloader) logf(format string, a ...interface{}) {
-	fmt.Fprintf(d.log, format+"\n", a...)
+	d.con.logf(format, a...)
 }
 
 // relPath of the image in the output dir, '/' separated
@@ -295,9 +295,11 @@ func (d *downloader) getImage(ctx context.Context, img *imagelist.Image, n, tota
 			return err
 		}
 
+		d.con.startFile(n, total, img.File, a.Size)
 		got, err := d.getArchive(ctx, a)
+		d.con.endFile()
 		for _, g := range got {
-			d.logf("[%d/%d] %s  <- %s %s", n, total, g, a.Source, a.Path)
+			d.logf("[%d/%d] %s  <- %s", n, total, g, d.sources[a.Source].URL(a.Path))
 		}
 		if d.wanted[img.ID] == nil { // got it
 			return nil
@@ -347,7 +349,7 @@ func (d *downloader) getArchive(ctx context.Context, a *imagelist.Archive) ([]st
 	tmp := filepath.Join(d.opt.out, fmt.Sprintf(".download-%d.part", d.tmpCount))
 	defer os.Remove(tmp)
 
-	err := d.fetch.toFile(ctx, src.URL(a.Path), tmp, maxArchiveSize)
+	err := d.fetch.toFile(ctx, src.URL(a.Path), tmp, maxArchiveSize, d.con.progress)
 	if !strings.HasPrefix(src.Base, "file:") { // be nice to the source, also after an error - not needed for a local folder
 		d.sleep(ctx, time.Duration(src.PauseMs)*time.Millisecond)
 	}

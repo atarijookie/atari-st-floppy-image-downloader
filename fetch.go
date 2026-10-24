@@ -41,8 +41,9 @@ func newFetcher() *fetcher {
 	}
 }
 
-// open - reader of what's at rawURL: http(s)://, file:// or a local path; at most maxSize bytes
-func (f *fetcher) open(ctx context.Context, rawURL string, maxSize int64) (io.ReadCloser, error) {
+// open - reader of what's at rawURL: http(s)://, file:// or a local path; at most maxSize bytes. Also its size, if
+// known (-1 if not).
+func (f *fetcher) open(ctx context.Context, rawURL string, maxSize int64) (io.ReadCloser, int64, error) {
 	u, err := url.Parse(rawURL)
 	if err != nil || u.Scheme == "" || len(u.Scheme) == 1 { // no scheme, or a Windows drive letter - a local file
 		return openLocal(rawURL)
@@ -53,41 +54,62 @@ func (f *fetcher) open(ctx context.Context, rawURL string, maxSize int64) (io.Re
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
 	if err != nil {
-		return nil, err
+		return nil, -1, err
 	}
 	req.Header.Set("User-Agent", f.userAgent)
 
 	resp, err := f.client.Do(req)
 	if err != nil {
 		if ctx.Err() != nil {
-			return nil, ctx.Err()
+			return nil, -1, ctx.Err()
 		}
-		return nil, &networkError{err}
+		return nil, -1, &networkError{err}
 	}
 	if resp.StatusCode != http.StatusOK {
 		resp.Body.Close()
 		err := fmt.Errorf("HTTP %s", resp.Status)
 		if resp.StatusCode >= 500 || resp.StatusCode == http.StatusTooManyRequests {
-			return nil, &networkError{err}
+			return nil, -1, &networkError{err}
 		}
-		return nil, &badFileError{err.Error()}
+		return nil, -1, &badFileError{err.Error()}
 	}
 	if resp.ContentLength > maxSize {
 		resp.Body.Close()
-		return nil, badFile("too big (%d MB)", resp.ContentLength>>20)
+		return nil, -1, badFile("too big (%d MB)", resp.ContentLength>>20)
 	}
-	return resp.Body, nil
+	return resp.Body, resp.ContentLength, nil
 }
 
-func openLocal(path string) (io.ReadCloser, error) {
+func openLocal(path string) (io.ReadCloser, int64, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return nil, badFile("not found: %s", path)
+			return nil, -1, badFile("not found: %s", path)
 		}
-		return nil, err
+		return nil, -1, err
 	}
-	return f, nil
+	size := int64(-1)
+	if st, err := f.Stat(); err == nil {
+		size = st.Size()
+	}
+	return f, size, nil
+}
+
+// progressWriter counts the written bytes for a progress callback
+type progressWriter struct {
+	w     io.Writer
+	done  int64
+	total int64
+	cb    func(done, total int64)
+}
+
+func (p *progressWriter) Write(b []byte) (int, error) {
+	n, err := p.w.Write(b)
+	p.done += int64(n)
+	if p.cb != nil {
+		p.cb(p.done, p.total)
+	}
+	return n, err
 }
 
 // localPath of a file:// URL - file:///C:/x on Windows is C:/x
@@ -99,12 +121,13 @@ func localPath(u *url.URL) string {
 	return filepath.FromSlash(p)
 }
 
-// toFile downloads rawURL into file, at most maxSize bytes
-func (f *fetcher) toFile(ctx context.Context, rawURL, file string, maxSize int64) error {
+// toFile downloads rawURL into file, at most maxSize bytes; progress (may be nil) gets the bytes so far and the size
+// (-1 if not known)
+func (f *fetcher) toFile(ctx context.Context, rawURL, file string, maxSize int64, progress func(done, total int64)) error {
 	ctx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
 
-	body, err := f.open(ctx, rawURL, maxSize)
+	body, size, err := f.open(ctx, rawURL, maxSize)
 	if err != nil {
 		return err
 	}
@@ -114,7 +137,7 @@ func (f *fetcher) toFile(ctx context.Context, rawURL, file string, maxSize int64
 	if err != nil {
 		return err
 	}
-	n, copyErr := io.Copy(out, io.LimitReader(body, maxSize+1))
+	n, copyErr := io.Copy(&progressWriter{w: out, total: size, cb: progress}, io.LimitReader(body, maxSize+1))
 	closeErr := out.Close()
 
 	switch {
@@ -135,7 +158,7 @@ func (f *fetcher) bytes(ctx context.Context, rawURL string, maxSize int64) ([]by
 	ctx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
 
-	body, err := f.open(ctx, rawURL, maxSize)
+	body, _, err := f.open(ctx, rawURL, maxSize)
 	if err != nil {
 		return nil, err
 	}

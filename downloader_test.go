@@ -133,7 +133,7 @@ func (fx *fixture) run(opt options) *downloader {
 		opt.out = fx.out
 	}
 	var log bytes.Buffer
-	d := newDownloader(opt, fx.list, newFetcher(), &log)
+	d := newDownloader(opt, fx.list, newFetcher(), newConsole(&log, false, nil))
 	d.sleep = func(context.Context, time.Duration) {}
 	d.diskFree = func(string) (uint64, error) { return 100 << 30, nil }
 	if err := d.run(context.Background()); err != nil {
@@ -146,7 +146,7 @@ func (fx *fixture) runWith(opt options, setup func(d *downloader)) (*downloader,
 	fx.t.Helper()
 	opt.out = fx.out
 	var log bytes.Buffer
-	d := newDownloader(opt, fx.list, newFetcher(), &log)
+	d := newDownloader(opt, fx.list, newFetcher(), newConsole(&log, false, nil))
 	d.sleep = func(context.Context, time.Duration) {}
 	d.diskFree = func(string) (uint64, error) { return 100 << 30, nil }
 	setup(d)
@@ -327,7 +327,7 @@ func TestStopped(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	var log bytes.Buffer
-	d := newDownloader(options{out: fx.out}, fx.list, newFetcher(), &log)
+	d := newDownloader(options{out: fx.out}, fx.list, newFetcher(), newConsole(&log, false, nil))
 	d.sleep = func(context.Context, time.Duration) {}
 	if err := d.run(ctx); err != nil {
 		t.Fatal(err)
@@ -355,7 +355,7 @@ func TestOneRunAtATime(t *testing.T) {
 
 	fx := newFixture(t)
 	fx.out = dir
-	d := newDownloader(options{out: dir}, fx.list, newFetcher(), &bytes.Buffer{})
+	d := newDownloader(options{out: dir}, fx.list, newFetcher(), newConsole(&bytes.Buffer{}, false, nil))
 	if err := d.run(context.Background()); err == nil || !strings.Contains(err.Error(), "another download") {
 		t.Fatalf("second run: %v", err)
 	}

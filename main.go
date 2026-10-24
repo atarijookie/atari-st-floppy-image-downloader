@@ -72,13 +72,17 @@ func run() int {
 	opt.keepFree = *keepFreeMB << 20
 	opt.filter = strings.Fields(strings.ToLower(*filter))
 
+	terminal, width := stdoutTerminal()
+	con := newConsole(os.Stdout, terminal, width)
+	defer con.close()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-signals
-		fmt.Println("\nstopping - writing what's done...")
+		con.logf("\nstopping - writing what's done...")
 		cancel()
 	}()
 
@@ -115,8 +119,10 @@ func run() int {
 	fmt.Printf("list %s: %d images, %d archives on %d sources; images go to %s\n",
 		list.Version, len(list.Images), len(list.Archives), len(list.Sources), opt.out)
 
-	d := newDownloader(opt, list, f, os.Stdout)
-	if err := d.run(ctx); err != nil {
+	d := newDownloader(opt, list, f, con)
+	err = d.run(ctx)
+	con.close()
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		return 1
 	}
