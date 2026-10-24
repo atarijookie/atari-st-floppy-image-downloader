@@ -2,7 +2,7 @@
 """
 Builds the image list (imagelist.json.gz, format in docs/imagelist.md) from the downloaded archives.
 
-  python3 -I tools/build_list.py                     # data/ -> dist/imagelist.json.gz
+  python3 -I tools/build_list.py                     # data/ -> list/imagelist.json.gz
 
 Reads:
   tools/sources.json                    the sources, in the order the downloader tries them
@@ -121,7 +121,7 @@ def main():
     ap.add_argument("--atarilegend-menus", default="data/atarilegend/menus.json")
     ap.add_argument("--atarilegend-archives", default="data/archives/atarilegend")
     ap.add_argument("--cosmosex-archives", default="data/archives/cosmosex")
-    ap.add_argument("--out", default="dist/imagelist.json.gz")
+    ap.add_argument("--out", default="list/imagelist.json.gz")
     ap.add_argument("--version", default=datetime.date.today().isoformat() + ".1")
     ap.add_argument("--max-name", type=int, default=60, help="max length of a file name (default 60)")
     args = ap.parse_args()

@@ -10,11 +10,12 @@ Needs Python 3.8+ (only the standard library), and a few GB of disk for the arch
 ```
 crawl_atarilegend.py ─> data/atarilegend/menus.json ─┐
                                                       ├─> fetch_atarilegend.py ─> data/archives/atarilegend/ ─┐
-fetch_cosmosex_lists.py ───────────────────────────────────────────────────────> data/archives/cosmosex/ ────┼─> build_list.py ─> dist/imagelist.json.gz
+fetch_cosmosex_lists.py ───────────────────────────────────────────────────────> data/archives/cosmosex/ ────┼─> build_list.py ─> list/imagelist.json.gz
 tools/sources.json ───────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-All from the repo root. `data/` and `dist/` are not in git (`.gitignore`).
+All from the repo root. `data/` and `dist/` are not in git (`.gitignore`); `list/imagelist.json.gz` is - it is published
+with every release.
 
 ### 1. Crawl AtariLegend - what disks there are
 
@@ -62,19 +63,20 @@ python3 -I tools/build_list.py
   becomes one image with two archives
 - names the images (`<name in the zip>_<games>.msa`, see [imagelist.md](imagelist.md#naming)) - in a stable order,
   so the same data gives the same names (the downloader renames the files when a name changes)
-- writes `dist/imagelist.json.gz`, prints how many images / archives
+- writes `list/imagelist.json.gz`, prints how many images / archives
 - `--version` - the list version, default today's date + `.1` (make it `.2`, ... for a second list on the same day)
 - tests of the naming: `python3 -I -m unittest discover -s tools`
 
 ### 5. Try it, publish it
 
 ```sh
-go run . -list dist/imagelist.json.gz -out /tmp/test-images -dry-run         # what would be downloaded
-go run . -list dist/imagelist.json.gz -out /tmp/test-images -limit 10        # a few for real
+go run . -list list/imagelist.json.gz -out /tmp/test-images -dry-run         # what would be downloaded
+go run . -list list/imagelist.json.gz -out /tmp/test-images -limit 10        # a few for real
 ```
 
-Then add `dist/imagelist.json.gz` to a new GitHub release (with the downloader binaries from `./build.sh <version>`) -
-the downloader gets the list from the latest release.
+Then commit `list/imagelist.json.gz` and tag a new version - the release workflow publishes it with the downloader
+(see the README, "Releasing"). The downloader gets the list from the latest release, so the users get the new list on
+their next run.
 
 ## Sources
 

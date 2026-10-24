@@ -1,0 +1,36 @@
+# A tag v<version> (e.g. v1.0.0) builds the downloader for all platforms and publishes a GitHub release with the
+# binaries and the image list (list/imagelist.json.gz, built locally by tools/build_list.py and committed).
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Test
+        run: |
+          go vet ./...
+          go test ./...
+          python3 -I -m unittest discover -s tools
+
+      - name: Build
+        run: |
+          ./build.sh "${GITHUB_REF_NAME#v}"
+          cp list/imagelist.json.gz dist/
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --title "$GITHUB_REF_NAME" --generate-notes

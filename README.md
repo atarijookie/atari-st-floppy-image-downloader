@@ -82,11 +82,11 @@ go run . -out ~/atari/floppies -dry-run
 go build -o stfloppy . && ./stfloppy -out ~/atari/floppies     # or build it once
 ```
 
-With a list made locally (`dist/imagelist.json.gz`, see [docs/building-the-list.md](docs/building-the-list.md)), and
+With a list made locally (`list/imagelist.json.gz`, see [docs/building-the-list.md](docs/building-the-list.md)), and
 the archives already downloaded by the tools - nothing is downloaded from the sites then:
 
 ```sh
-go run . -list dist/imagelist.json.gz -out ~/atari/floppies \
+go run . -list list/imagelist.json.gz -out ~/atari/floppies \
     -source atarilegend=file://$PWD/data/archives/atarilegend/ \
     -source exxos=file://$PWD/data/archives/cosmosex/
 ```
@@ -106,5 +106,15 @@ go test ./...
 ./build.sh 1.0.0         # all platforms -> dist/
 ```
 
-A release: `./build.sh <version>`, then create a GitHub release with the files from `dist/` - the binaries and
-`imagelist.json.gz` (the downloader gets the list from the latest release).
+### Releasing
+
+A tag `v<version>` builds and publishes a release (`.github/workflows/release.yml`): tests, the binaries for all the
+platforms, and `list/imagelist.json.gz` - the downloader gets the list from the latest release.
+
+```sh
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+A new image list (see [docs/building-the-list.md](docs/building-the-list.md)): commit `list/imagelist.json.gz`, then
+tag a new version the same way.
