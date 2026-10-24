@@ -1,0 +1,14 @@
+[
+    {
+        "id": "atarilegend",
+        "name": "AtariLegend",
+        "base": "https://www.atarilegend.com/storage/zips/menus/",
+        "pauseMs": 1000
+    },
+    {
+        "id": "exxos",
+        "name": "exxos forum - Automation",
+        "base": "https://www.exxosforum.co.uk/atari/games/automation/files/",
+        "pauseMs": 1000
+    }
+]

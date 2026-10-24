@@ -1,0 +1,4 @@
+data/
+dist/
+*.part
+__pycache__/

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atari ST floppy images</title>
+<style>
+:root { --bg: #ffffff; --fg: #1d1d1f; --muted: #6b6b70; --line: #e3e3e6; --accent: #2a6db5; --row: #f6f6f8; }
+@media (prefers-color-scheme: dark) {
+    :root { --bg: #18181a; --fg: #e8e8ea; --muted: #9a9aa0; --line: #333338; --accent: #6aa6ec; --row: #212124; }
+}
+body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+header { position: sticky; top: 0; background: var(--bg); border-bottom: 1px solid var(--line); padding: 14px 16px; }
+h1 { font-size: 18px; margin: 0 0 8px 0; }
+#q { width: 100%; max-width: 640px; box-sizing: border-box; font-size: 16px; padding: 8px 10px; border: 1px solid var(--line);
+     border-radius: 6px; background: var(--bg); color: var(--fg); }
+#count { color: var(--muted); font-size: 13px; margin-top: 6px; }
+main { padding: 4px 16px 40px 16px; }
+.disk { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.file { font-family: ui-monospace, Consolas, monospace; font-weight: 600; word-break: break-all; }
+.file button { margin-left: 8px; font-size: 12px; cursor: pointer; }
+.meta { color: var(--muted); font-size: 13px; }
+.meta a { color: var(--accent); }
+.games { margin-top: 2px; }
+.other { color: var(--muted); font-size: 13px; }
+mark { background: #ffe08a; color: #000; padding: 0 1px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Atari ST floppy images <span class="meta">list {{VERSION}}</span></h1>
+  <input id="q" type="search" placeholder="Search for a game, a menu disk, a file name..." autofocus>
+  <div id="count"></div>
+</header>
+<main id="list"></main>
+<script>
+var DATA = /*DATA*/[];
+
+function esc(s) {
+    return s.replace(/[&<>"]/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; });
+}
+
+// all the words of the search in the text, highlighted
+function mark(text, words) {
+    var out = esc(text);
+    words.forEach(function(w) {
+        if (!w) return;
+        var re = new RegExp('(' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'ig');
+        out = out.replace(re, '<mark>$1</mark>');
+    });
+    return out;
+}
+
+var MAX_SHOWN = 300;
+
+function show() {
+    var words = document.getElementById('q').value.toLowerCase().split(/\s+/).filter(Boolean);
+    var found = DATA.filter(function(d) {
+        var text = (d.f + ' ' + (d.s || '') + ' ' + (d.t || '') + ' ' + (d.g || []).join(' ') + ' ' + (d.o || []).join(' ')).toLowerCase();
+        return words.every(function(w) { return text.indexOf(w) !== -1; });
+    });
+
+    var html = found.slice(0, MAX_SHOWN).map(function(d) {
+        var meta = [];
+        if (d.t) meta.push(mark(d.t, words));
+        if (d.c && d.c !== 'intact') meta.push('condition: ' + esc(d.c));
+        if (d.l) meta.push('<a href="' + esc(d.l) + '" target="_blank" rel="noopener">AtariLegend</a>');
+        return '<div class="disk"><div class="file">' + mark(d.f, words) +
+               '<button type="button" data-f="' + esc(d.f) + '" title="Copy the file name">copy</button></div>' +
+               (meta.length ? '<div class="meta">' + meta.join(' &middot; ') + '</div>' : '') +
+               (d.g ? '<div class="games">' + d.g.map(function(g) { return mark(g, words); }).join(', ') + '</div>' : '') +
+               (d.o ? '<div class="other">' + d.o.map(function(g) { return mark(g, words); }).join(', ') + '</div>' : '') +
+               (!d.g && !d.o ? '<div class="other">content unknown</div>' : '') +
+               '</div>';
+    }).join('');
+
+    document.getElementById('list').innerHTML = html;
+    document.getElementById('count').textContent = found.length + ' of ' + DATA.length + ' images' +
+        (found.length > MAX_SHOWN ? ' - the first ' + MAX_SHOWN + ' shown, search for more' : '');
+}
+
+document.getElementById('list').addEventListener('click', function(e) {
+    var f = e.target.getAttribute && e.target.getAttribute('data-f');
+    if (!f) return;
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(f).then(function() { e.target.textContent = 'copied'; },
+                                              function() { prompt('File name:', f); });
+    } else {
+        prompt('File name:', f);
+    }
+});
+
+var timer = null;
+document.getElementById('q').addEventListener('input', function() {
+    clearTimeout(timer);
+    timer = setTimeout(show, 120);
+});
+show();
+</script>
+</body>
+</html>
