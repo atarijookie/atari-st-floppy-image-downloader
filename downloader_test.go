@@ -91,7 +91,7 @@ type fixture struct {
 }
 
 func newFixture(t *testing.T) *fixture {
-	fx := &fixture{t: t, srv: newFakeServer(t), out: filepath.Join(t.TempDir(), "floppyImages"),
+	fx := &fixture{t: t, srv: newFakeServer(t), out: filepath.Join(t.TempDir(), "floppy_images"),
 		data: map[string][]byte{"a": imageData(1, 1024), "b": imageData(2, 2048), "c": imageData(3, 512), "d": imageData(4, 512)}}
 
 	ab := zipOf(t, map[string][]byte{"A.MSA": fx.data["a"], "dir/B.ST": fx.data["b"], "readme.txt": []byte("hi")})

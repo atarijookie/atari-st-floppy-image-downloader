@@ -30,7 +30,7 @@ emulator.
      `./atari-st-floppy-image-downloader` (macOS may block it the first time - right-click it -> Open, or
      `xattr -d com.apple.quarantine atari-st-floppy-image-downloader`)
 
-3. The images go into the `floppyImages` folder next to it - about 3 GB for all ~4400 images, 1-2 hours (it waits a second between the downloads, to be nice to the sites).
+3. The images go into the `floppy_images` folder next to it - about 3 GB for all ~4400 images, 1-2 hours (it waits a second between the downloads, to be nice to the sites).
    It can be stopped (Ctrl+C, or closing the window) and started again - it goes on where it stopped.
    Each downloaded image is listed with the URL it came from; the bottom line shows the image being downloaded, its
    progress and the speed.
@@ -40,13 +40,13 @@ emulator.
 The file names have the games on the disk: `AUTO012_Arkanoid_Joust_Barbarian+.msa` (`+` = more games on it than fit
 into the name). So the file search of your system finds most of them. For all of them:
 
-- `floppyImages/index.html` - open it in a browser, type into the search box (works offline)
-- `floppyImages/games.txt` - one line per game, sorted: `Joust  ->  AUTO012_Arkanoid_Joust_Barbarian+.msa`
+- `floppy_images/index.html` - open it in a browser, type into the search box (works offline)
+- `floppy_images/games.txt` - one line per game, sorted: `Joust  ->  AUTO012_Arkanoid_Joust_Barbarian+.msa`
 
 ### Options
 
 ```
--out DIR          folder for the images (default: floppyImages next to the program)
+-out DIR          folder for the images (default: floppy_images next to the program)
 -filter "WORDS"   only the images with all these words in their name / menu disk / games, e.g. -filter "automation"
 -limit N          at most N images
 -dry-run          only tell what would be downloaded
@@ -57,7 +57,7 @@ into the name). So the file search of your system finds most of them. For all of
                   -source atarilegend=file:///mnt/mirror/atarilegend/
 ```
 
-`floppyImages/.downloaded.json` remembers what was downloaded - images are renamed in place when a newer list gives
+`floppy_images/.downloaded.json` remembers what was downloaded - images are renamed in place when a newer list gives
 them a better name, never overwritten.
 
 ### Choosing what to download

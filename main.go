@@ -40,7 +40,7 @@ func main() {
 func run() int {
 	var opt options
 	listURL := flag.String("list", defaultListURL, "the image list: URL or local file")
-	flag.StringVar(&opt.out, "out", "", "folder for the images (default: floppyImages next to this program)")
+	flag.StringVar(&opt.out, "out", "", "folder for the images (default: floppy_images next to this program)")
 	keepFreeMB := flag.Uint64("keep-free", 1024, "MB to keep free on the disk")
 	filter := flag.String("filter", "", "only the images with all these words in their name / menu disk / games, e.g. -filter \"automation\"")
 	flag.IntVar(&opt.limit, "limit", 0, "download at most this many images (0 = all)")
@@ -62,10 +62,10 @@ func run() int {
 		return 0
 	}
 	if opt.out == "" { // next to the program - double-clicked in Finder, the current dir would be the home dir
-		opt.out = "floppyImages"
+		opt.out = "floppy_images"
 		if exe, err := os.Executable(); err == nil {
 			if exe, err = filepath.EvalSymlinks(exe); err == nil {
-				opt.out = filepath.Join(filepath.Dir(exe), "floppyImages")
+				opt.out = filepath.Join(filepath.Dir(exe), "floppy_images")
 			}
 		}
 	}
